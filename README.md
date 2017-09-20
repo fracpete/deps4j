@@ -1,2 +1,2 @@
-# jdeps4jars
-Similar to jdeps tool, but working on jars from a classpath.
+# deps4j
+Tools for determining dependencies of classes. 
