@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.github.fracpete</groupId>
-  <artifactId>jdeps4jars</artifactId>
+  <artifactId>deps4j</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -14,8 +14,8 @@
     <version>7</version>
   </parent>
 
-  <name>jdeps4jars</name>
-  <description>Similar to jdeps tool, but working on jars from a classpath.</description>
+  <name>deps4j</name>
+  <description>Tools for determining dependencies of classes.</description>
   <organization>
     <name>University of Waikato, Hamilton, NZ</name>
     <url>http://www.waikato.ac.nz/</url>
@@ -31,10 +31,8 @@
     <developer>
       <id>fracpete</id>
       <name>Peter Reutemann</name>
-      <email>fracpete@waikato.ac.nz</email>
-      <url>http://www.cms.waikato.ac.nz/~fracpete/</url>
-      <organization>University of Waikato, CS department</organization>
-      <organizationUrl>http://www.cs.waikato.ac.nz/</organizationUrl>
+      <email>fracpete@gmail.com</email>
+      <url>http://open.fracpete.org/</url>
       <roles>
         <role>developer</role>
       </roles>
@@ -86,9 +84,9 @@
   </properties>
 
   <scm>
-    <connection>scm:git:https://github.com/fracpete/jdeps4jars</connection>
-    <developerConnection>scm:git:https://github.com/fracpete/jdeps4jars</developerConnection>
-    <url>https://github.com/fracpete/jdeps4jars</url>
+    <connection>scm:git:https://github.com/fracpete/deps4j</connection>
+    <developerConnection>scm:git:https://github.com/fracpete/deps4j</developerConnection>
+    <url>https://github.com/fracpete/deps4j</url>
     <tag>HEAD</tag>
   </scm>
 
