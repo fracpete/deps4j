@@ -9,7 +9,7 @@ com.github.fracpete.deps4j.MinDeps
 ```
 
 ### Help
-```bash
+```
 usage: com.github.fracpete.deps4j.MinDeps
        [-h] --java-home JAVAHOME --class-path CLASSPATH
        --classes CLASSES [--additional ADDITIONAL] [--output OUTPUT]
@@ -38,8 +38,8 @@ optional arguments:
 ### Example
 **Use case:** determine a minimal subset of classes for an embedded version of Weka.
 
-The following Weka classes are required (`classes.txt`):
-```java
+The following Weka classes are required (`./classes.txt`):
+```
 weka.classifiers.Evaluation
 weka.classifiers.functions.Logistic
 weka.classifiers.functions.MultilayerPerceptron
@@ -53,7 +53,8 @@ weka.filters.supervised.instance.Resample
 ```
 
 The JDK is located at `/some/where/jdk1.8.0_144-64bit` and the Weka 
-jar at `./weka.jar`.
+jar at `./weka.jar`. We are looking for Weka packages, hence
+using `weka` as positional argument.
 
 This gives the following commandline, which will output the determined 
 classes on stdout:
@@ -62,7 +63,7 @@ com.github.fracpete.deps4j.MinDeps \
   --java-home
   /some/where/jdk1.8.0_144-64bit
   --classes
-  classes.txt
+  ./classes.txt
   --class-path
   ./weka.jar
   weka
