@@ -29,11 +29,14 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class MinDeps {
 
@@ -49,9 +52,12 @@ public class MinDeps {
   /** the file with classes to determine the minimum dependencies for. */
   protected File m_ClassesFile;
 
-  /** the file with additional resources to include (optional). */
-  protected File m_ResourceFiles;
+  /** the file with additional class names to include (optional). */
+  protected File m_AdditionalFile;
 
+  /** the output file for the determined class names (optional). */
+  protected File m_OutputFile;
+  
   /** the classes to inspect. */
   protected List<String> m_Classes;
 
@@ -70,7 +76,8 @@ public class MinDeps {
     m_JavaHome         = (System.getenv("JAVA_HOME") != null ? new File(System.getenv("JAVA_HOME")) : null);
     m_ClassesFile      = null;
     m_ClassPath        = null;
-    m_ResourceFiles    = null;
+    m_AdditionalFile   = null;
+    m_OutputFile       = null;
     m_Classes          = new ArrayList<>();
     m_Resources        = new ArrayList<>();
     m_DependentClasses = new HashSet<>();
@@ -133,21 +140,41 @@ public class MinDeps {
   }
 
   /**
-   * Sets the file with the additional resource files to include (optional).
+   * Sets the file with the additional classnames to include (optional).
    *
    * @param value	the file
    */
-  public void setResourceFiles(File value) {
-    m_ResourceFiles = value;
+  public void setAdditionalFile(File value) {
+    m_AdditionalFile = value;
   }
 
   /**
-   * Returns the file with the additional resource files to include (optional).
+   * Returns the file with the additional classnames to include (optional).
    *
    * @return		the file, null if not set
    */
-  public File getResourceFiles() {
-    return m_ResourceFiles;
+  public File getAdditionalFile() {
+    return m_AdditionalFile;
+  }
+
+  /**
+   * Sets the file for storing the determined class names in (optional).
+   * Uses stdout if not set.
+   *
+   * @param value	the file
+   */
+  public void setOutputFile(File value) {
+    m_OutputFile = value;
+  }
+
+  /**
+   * Returns the file for storing the determined class names in (optional).
+   * Uses stdout if not set.
+   *
+   * @return		the file, null if not set
+   */
+  public File getOutputFile() {
+    return m_OutputFile;
   }
 
   /**
@@ -176,12 +203,18 @@ public class MinDeps {
       .dest("classes")
       .required(true)
       .help("The file containing the classes to determine the dependencies for. Empty lines and lines starting with # get ignored.");
-    parser.addArgument("--resources")
+    parser.addArgument("--additional")
       .type(Arguments.fileType())
       .setDefault(new File("."))
       .required(false)
-      .dest("resources")
-      .help("The file with resources to include (eg .props files).");
+      .dest("additional")
+      .help("The file with additional class names to just include.");
+    parser.addArgument("--output")
+      .type(Arguments.fileType())
+      .setDefault(new File("."))
+      .required(false)
+      .dest("output")
+      .help("The file for storing the determined class names in.");
 
     try {
       ns = parser.parseArgs(options);
@@ -194,7 +227,8 @@ public class MinDeps {
     setJavaHome(ns.get("javahome"));
     setClassPath(ns.getString("classpath"));
     setClassesFile(ns.get("classes"));
-    setResourceFiles(ns.get("resources"));
+    setAdditionalFile(ns.get("additional"));
+    setOutputFile(ns.get("output"));
 
     return true;
   }
@@ -272,13 +306,42 @@ public class MinDeps {
       return error;
 
     // read resources
-    if ((m_ResourceFiles != null) && (!m_ResourceFiles.exists()) && (!m_ResourceFiles.isDirectory())) {
-      error = readFile(m_ResourceFiles, m_Resources);
+    if ((m_AdditionalFile != null) && (!m_AdditionalFile.exists()) && (!m_AdditionalFile.isDirectory())) {
+      error = readFile(m_AdditionalFile, m_Resources);
       if (error != null)
 	return error;
     }
 
     return null;
+  }
+
+  /**
+   * Filters the list of strings with a regular expression.
+   *
+   * @param lines	the list to filter
+   * @param regexp	the regular expression to use
+   * @param invert	whether to invert the matching sense
+   * @return		the filtered list
+   */
+  protected List<String> filter(List<String> lines, String regexp, boolean invert) {
+    List<String>	result;
+    Pattern 		pattern;
+
+    result  = new ArrayList<>();
+    pattern = Pattern.compile(regexp);
+
+    for (String line: lines) {
+      if (invert) {
+	if (!pattern.matcher(line).matches())
+	  result.add(line);
+      }
+      else {
+	if (pattern.matcher(line).matches())
+	  result.add(line);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -290,6 +353,9 @@ public class MinDeps {
     String[] 			cmd;
     ProcessBuilder 		builder;
     CollectingProcessOutput 	output;
+    List<String>		lines;
+    int				i;
+    String			line;
 
     for (String cls: m_Classes) {
       // progress
@@ -313,7 +379,24 @@ public class MinDeps {
         return "Failed to execute: " + builder.toString() + "\n" + e;
       }
 
-      // TODO parse output
+      // filter output
+      lines = new ArrayList<>(Arrays.asList(output.getStdOut().replace("\r", "").split("\n")));
+      lines = filter(lines, ".* weka\\..*$", false);
+      lines = filter(lines, ".*\\$.*", true);
+      lines = filter(lines, ".*\\.jar\\)", true);
+
+      // clean up
+      for (i = 0; i < lines.size(); i++) {
+        line = lines.get(i);
+        line = line.replaceFirst(".* -> ", "");
+        line = line.replaceFirst(" .*$", "");
+        line = line.trim();
+        lines.set(i, line);
+      }
+
+      // add to result
+      m_DependentClasses.addAll(lines);
+      System.err.println("--> " + m_DependentClasses.size());
     }
 
     return null;
@@ -348,8 +431,19 @@ public class MinDeps {
    * Outputs the dependencies on stdout.
    */
   public void output() {
-    for (String dep: m_Dependencies)
-      System.out.println(dep);
+    if ((m_OutputFile == null && (m_OutputFile.isDirectory()))) {
+      for (String dep : m_Dependencies)
+	System.out.println(dep);
+    }
+    else {
+      try {
+	Files.write(m_OutputFile.toPath(), m_Dependencies, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+      }
+      catch (Exception e) {
+        System.err.println("Failed to write dependencies to: " + m_OutputFile);
+        e.printStackTrace();
+      }
+    }
   }
 
   public static void main(String[] args) throws Exception {
