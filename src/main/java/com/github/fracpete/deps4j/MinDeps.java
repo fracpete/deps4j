@@ -38,6 +38,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * Class for determining the minimum required classes from a small set
+ * of classes and an associated classpath.
+ */
 public class MinDeps {
 
   /** the java home directory to use. */
@@ -54,6 +58,9 @@ public class MinDeps {
 
   /** the file with additional class names to include (optional). */
   protected File m_AdditionalFile;
+
+  /** packages to keep. */
+  protected List<String> m_Packages;
 
   /** the output file for the determined class names (optional). */
   protected File m_OutputFile;
@@ -78,6 +85,7 @@ public class MinDeps {
     m_ClassPath        = null;
     m_AdditionalFile   = null;
     m_OutputFile       = null;
+    m_Packages         = new ArrayList<>();
     m_Classes          = new ArrayList<>();
     m_Resources        = new ArrayList<>();
     m_DependentClasses = new HashSet<>();
@@ -158,6 +166,19 @@ public class MinDeps {
   }
 
   /**
+   * Sets the packages to keep.
+   *
+   * @param value	the packages
+   */
+  public void setPackages(List<String> value) {
+    m_Packages.addAll(value);
+  }
+
+  public List<String> getPackages() {
+    return m_Packages;
+  }
+
+  /**
    * Sets the file for storing the determined class names in (optional).
    * Uses stdout if not set.
    *
@@ -209,6 +230,11 @@ public class MinDeps {
       .required(false)
       .dest("additional")
       .help("The file with additional class names to just include.");
+    parser.addArgument("package")
+      .dest("packages")
+      .required(true)
+      .nargs("+")
+      .help("The packages to keep, eg 'weka'.");
     parser.addArgument("--output")
       .type(Arguments.fileType())
       .setDefault(new File("."))
@@ -228,6 +254,7 @@ public class MinDeps {
     setClassPath(ns.getString("classpath"));
     setClassesFile(ns.get("classes"));
     setAdditionalFile(ns.get("additional"));
+    setPackages(ns.getList("packages"));
     setOutputFile(ns.get("output"));
 
     return true;
@@ -283,6 +310,7 @@ public class MinDeps {
    */
   protected String check() {
     String		error;
+    int			i;
 
     if (!m_JavaHome.exists())
       return "Java home directory does not exist: " + m_JavaHome;
@@ -345,6 +373,32 @@ public class MinDeps {
   }
 
   /**
+   * Builds the regular expression for the packages to keep.
+   *
+   * @return		the regexp
+   */
+  protected String packagesRegExp() {
+    StringBuilder	result;
+    int			i;
+    String		pkg;
+
+    result = new StringBuilder();
+    result.append(".* (");
+    for (i = 0; i < m_Packages.size(); i++) {
+      if (i > 0)
+        result.append("|");
+      pkg = m_Packages.get(i);
+      if (!pkg.endsWith("."))
+        pkg = pkg + ".";
+      pkg = pkg.replace(".", "\\.");
+      result.append(pkg);
+    }
+    result.append(").*$");
+
+    return result.toString();
+  }
+
+  /**
    * Determines the dependencies.
    *
    * @return		null if successful, otherwise error message
@@ -381,7 +435,7 @@ public class MinDeps {
 
       // filter output
       lines = new ArrayList<>(Arrays.asList(output.getStdOut().replace("\r", "").split("\n")));
-      lines = filter(lines, ".* weka\\..*$", false);
+      lines = filter(lines, packagesRegExp(), false);
       lines = filter(lines, ".*\\$.*", true);
       lines = filter(lines, ".*\\.jar\\)", true);
 
