@@ -485,7 +485,7 @@ public class MinDeps {
    * Outputs the dependencies on stdout.
    */
   public void output() {
-    if ((m_OutputFile == null && (m_OutputFile.isDirectory()))) {
+    if ((m_OutputFile == null || m_OutputFile.isDirectory())) {
       for (String dep : m_Dependencies)
 	System.out.println(dep);
     }
@@ -498,6 +498,16 @@ public class MinDeps {
         e.printStackTrace();
       }
     }
+  }
+
+  /**
+   * Returns the dependencies collected.
+   *
+   * @return		the dependencies
+   * @see		#execute()
+   */
+  public List<String> getDependencies() {
+    return m_Dependencies;
   }
 
   public static void main(String[] args) throws Exception {
