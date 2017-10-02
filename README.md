@@ -1,14 +1,19 @@
 # deps4j
-Tools for determining dependencies of classes. 
+
+Tools for determining dependencies of classes. Makes use of the 
+[jdeps](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jdeps.html)
+tool that is part of the Java JDK.
 
 ## Minimal dependencies
 The following class allows you to determine the minimal set of classes
 required to make a supplied list of classes compile:
+
 ```
 com.github.fracpete.deps4j.MinDeps
 ```
 
 ### Help
+
 ```
 usage: com.github.fracpete.deps4j.MinDeps
        [-h] --java-home JAVAHOME --class-path CLASSPATH
@@ -36,9 +41,11 @@ optional arguments:
 ```
 
 ### Example
+
 **Use case:** determine a minimal subset of classes for an embedded version of Weka.
 
 The following Weka classes are required (`./classes.txt`):
+
 ```
 weka.classifiers.Evaluation
 weka.classifiers.functions.Logistic
@@ -58,6 +65,7 @@ using `weka` as positional argument.
 
 This gives the following commandline, which will output the determined 
 classes on stdout:
+
 ```bash
 com.github.fracpete.deps4j.MinDeps \
   --java-home
