@@ -174,6 +174,11 @@ public class MinDeps {
     m_Packages.addAll(value);
   }
 
+  /**
+   * Returns the packages to keep.
+   *
+   * @return		the packages
+   */
   public List<String> getPackages() {
     return m_Packages;
   }
@@ -230,17 +235,17 @@ public class MinDeps {
       .required(false)
       .dest("additional")
       .help("The file with additional class names to just include.");
-    parser.addArgument("package")
-      .dest("packages")
-      .required(true)
-      .nargs("+")
-      .help("The packages to keep, eg 'weka'.");
     parser.addArgument("--output")
       .type(Arguments.fileType())
       .setDefault(new File("."))
       .required(false)
       .dest("output")
       .help("The file for storing the determined class names in.");
+    parser.addArgument("package")
+      .dest("packages")
+      .required(true)
+      .nargs("+")
+      .help("The packages to keep, eg 'weka'.");
 
     try {
       ns = parser.parseArgs(options);
@@ -310,7 +315,6 @@ public class MinDeps {
    */
   protected String check() {
     String		error;
-    int			i;
 
     if (!m_JavaHome.exists())
       return "Java home directory does not exist: " + m_JavaHome;
