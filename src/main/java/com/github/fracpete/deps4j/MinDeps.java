@@ -338,7 +338,7 @@ public class MinDeps {
       return error;
 
     // read resources
-    if ((m_AdditionalFile != null) && (!m_AdditionalFile.exists()) && (!m_AdditionalFile.isDirectory())) {
+    if ((m_AdditionalFile != null) && m_AdditionalFile.exists() && (!m_AdditionalFile.isDirectory())) {
       error = readFile(m_AdditionalFile, m_Resources);
       if (error != null)
 	return error;
@@ -477,8 +477,15 @@ public class MinDeps {
 
     if (result == null) {
       m_Dependencies = new ArrayList<>();
-      m_Dependencies.addAll(m_DependentClasses);
-      m_Dependencies.addAll(m_Resources);
+      m_Dependencies.addAll(m_Classes);
+      for (String cls: m_DependentClasses) {
+        if (!m_Dependencies.contains(cls))
+	  m_Dependencies.add(cls);
+      }
+      for (String cls: m_Resources) {
+        if (!m_Dependencies.contains(cls))
+	  m_Dependencies.add(cls);
+      }
       Collections.sort(m_Dependencies);
     }
 
