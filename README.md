@@ -76,3 +76,14 @@ com.github.fracpete.deps4j.MinDeps \
   ./weka.jar
   weka
 ```
+
+## Maven
+
+Add the following dependency to your `pom.xml`:
+```xml
+    <dependency>
+      <groupId>com.github.fracpete</groupId>
+      <artifactId>deps4j</artifactId>
+      <version>0.0.2</version>
+    </dependency>
+```
